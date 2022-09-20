@@ -14,3 +14,13 @@ AFPSGameMode::AFPSGameMode()
 	// use our custom HUD class
 	HUDClass = AFPSHUD::StaticClass();
 }
+
+void AFPSGameMode::CompleteMission(APawn* InstingatorPawn)
+{
+	if(InstingatorPawn)
+	{
+		InstingatorPawn->DisableInput(nullptr);
+	}
+
+	OnMissionComplete(InstingatorPawn);
+}
