@@ -1,10 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "FPSAIGuard.h"
 #include "Perception/PawnSensingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
+#include "Net/UnrealNetwork.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
@@ -26,6 +27,11 @@ void AFPSAIGuard::BeginPlay()
 	Super::BeginPlay();
 
 	OriginalRotation = GetActorRotation();
+
+	if(bPatrol)
+	{
+		MoveToNextPatrolPoint();
+	}
 }
 
 void AFPSAIGuard::OnPawnSeen(APawn* SeenPawn)
@@ -43,6 +49,12 @@ void AFPSAIGuard::OnPawnSeen(APawn* SeenPawn)
 	}
 
 	SetGuardState(EAIState::Alerted);
+
+	AController* Controller = GetController();
+	if(Controller)
+	{
+		Controller->StopMovement();
+	}
 }
 
 void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, float Volume)
@@ -67,6 +79,12 @@ void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, 
 	GetWorldTimerManager().SetTimer(TimerHandleResetOrientation, this, &AFPSAIGuard::ResetOrientation, 3.0f);
 
 	SetGuardState(EAIState::Suspicious);
+
+	AController* Controller = GetController();
+	if(Controller)
+	{
+		Controller->StopMovement();
+	}
 }
 
 void AFPSAIGuard::ResetOrientation()
@@ -78,6 +96,11 @@ void AFPSAIGuard::ResetOrientation()
 	SetActorRotation(OriginalRotation);
 
 	SetGuardState(EAIState::Idle);
+
+	if(bPatrol)
+	{
+		MoveToNextPatrolPoint();
+	}
 }
 
 void AFPSAIGuard::SetGuardState(EAIState NewState)
@@ -89,6 +112,11 @@ void AFPSAIGuard::SetGuardState(EAIState NewState)
 	GuardState = NewState;
 
 	OnStateChange(GuardState);
+
+	if(bPatrol)
+	{
+		MoveToNextPatrolPoint();
+	}
 }
 
 // Called every frame
@@ -96,4 +124,29 @@ void AFPSAIGuard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if(CurrentPatrolPoint)
+	{
+		FVector Delta = GetActorLocation() - CurrentPatrolPoint->GetActorLocation();
+		float DistanceToGoal = Delta.Size();
+
+		if(DistanceToGoal)
+		{
+			MoveToNextPatrolPoint();
+		}
+	}
+
+}
+
+void AFPSAIGuard::MoveToNextPatrolPoint()
+{
+	if(CurrentPatrolPoint == nullptr || CurrentPatrolPoint == SecondPatrolPoint)
+	{
+		CurrentPatrolPoint = FirstPatrolPoint;
+	}
+	else if(CurrentPatrolPoint == SecondPatrolPoint)
+	{
+		CurrentPatrolPoint = SecondPatrolPoint;
+	}
+
+	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), CurrentPatrolPoint);
 }
