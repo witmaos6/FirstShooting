@@ -103,15 +103,21 @@ void AFPSAIGuard::ResetOrientation()
 	}
 }
 
+void AFPSAIGuard::OnRep_GuardState()
+{
+	OnStateChange(GuardState);
+
+}
+
 void AFPSAIGuard::SetGuardState(EAIState NewState)
 {
 	if(GuardState == NewState)
 	{
 		return;
 	}
-	GuardState = NewState;
 
-	OnStateChange(GuardState);
+	GuardState = NewState;
+	OnRep_GuardState();
 
 	if(bPatrol)
 	{
@@ -135,6 +141,13 @@ void AFPSAIGuard::Tick(float DeltaTime)
 		}
 	}
 
+}
+
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AFPSAIGuard, GuardState);
 }
 
 void AFPSAIGuard::MoveToNextPatrolPoint()
