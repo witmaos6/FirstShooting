@@ -7,18 +7,18 @@
 
 void AFPSGameState::MulticastMissionComplete_Implementation(APawn* InstigatorPawn, bool bMissionSuccess)
 {
-	for (TPlayerControllerIterator<AFPSPlayerController>::ServerAll It(GetWorld()); It; ++It)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; It++)
 	{
-		AFPSPlayerController* PC = *It;
+		AFPSPlayerController* PC = Cast<AFPSPlayerController>(It->Get());
 		if (PC && PC->IsLocalController())
 		{
 			PC->OnMissionCompleted(InstigatorPawn, bMissionSuccess);
 
 			// Disable Input
-			APawn* MyPawn = It->GetPawn();
-			if(MyPawn)
+			APawn* MyPawn = PC->GetPawn();
+			if (MyPawn)
 			{
-				MyPawn->DisableInput(nullptr);
+				MyPawn->DisableInput(PC);
 			}
 		}
 	}

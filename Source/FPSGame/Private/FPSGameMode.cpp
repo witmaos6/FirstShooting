@@ -33,10 +33,10 @@ void AFPSGameMode::CompleteMission(APawn* InstigatorPawn, bool bMissionSuccess)
 			{
 				AActor* NewViewTarget = ReturnedActors[0];
 
-				for (TPlayerControllerIterator<AFPSPlayerController>::ServerAll It(GetWorld()); It; ++It)
+				for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; It++)
 				{
-					APlayerController* PC = *It;
-					if(PC && PC->IsLocalController())
+					APlayerController* PC = It->Get();
+					if (PC)
 					{
 						PC->SetViewTargetWithBlend(NewViewTarget, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
 					}
